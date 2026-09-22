@@ -50,12 +50,13 @@ let gatewayConfig = {
 
 // Firebase Cloud Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDummyKeyForBaliKiteFest2026",
-    authDomain: "semaya-kite-festival.firebaseapp.com",
-    projectId: "semaya-kite-festival",
-    storageBucket: "semaya-kite-festival.appspot.com",
-    messagingSenderId: "987654321012",
-    appId: "1:987654321012:web:a1b2c3d4e5f6g7h8i9j0"
+  apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
+  authDomain: "form-lomba-layangan.firebaseapp.com",
+  projectId: "form-lomba-layangan",
+  storageBucket: "form-lomba-layangan.firebasestorage.app",
+  messagingSenderId: "742312467145",
+  appId: "1:742312467145:web:3ff6fba776a731af690b18",
+  measurementId: "G-1PQ22080GK"
 };
 
 let db = null;
