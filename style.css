@@ -1,72 +1,77 @@
+/* STREAMING_CHUNK:Styling A4 print layout and custom scanner video components... /
 @media print {
-    @page {
-        size: A4 portrait;
-        margin: 0;
-    }
-    html, body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        overflow: hidden !important;
-    }
-    header, main, #toast-container, #qr-camera-modal, #payment-modal, 
-    #gateway-settings-modal, #offline-register-modal, #edit-modal, 
-    #confirm-modal, .no-print {
-        display: none !important;
-    }
-    #card-modal {
-        display: flex !important;
-        position: fixed !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: #ffffff !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        z-index: 9999 !important;
-    }
-    #printable-card {
-        display: block !important;
-        position: relative !important;
-        width: 165mm !important;
-        max-width: 90% !important;
-        padding: 18px 22px !important;
-        margin: 0 auto !important;
-        box-shadow: none !important;
-        border: 3px solid #000000 !important;
-        background: #ffffff !important;
-        color: #000000 !important;
-        border-radius: 18px !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        page-break-inside: avoid !important;
-        box-sizing: border-box !important;
-    }
-    #printable-card * {
-        color: #000000 !important;
-        text-shadow: none !important;
-        box-sizing: border-box !important;
-    }
-    #printable-card #modal-nomer-layangan {
-        font-size: 3.8rem !important;
-        line-height: 1 !important;
-        padding-top: 4px !important;
-        padding-bottom: 4px !important;
-    }
-    #printable-card #qrcode canvas,
-    #printable-card #qrcode img {
-        width: 115px !important;
-        height: 115px !important;
-    }
+@page {
+size: A4 portrait;
+margin: 0;
 }
+html, body {
+background: #ffffff !important;
+color: #000000 !important;
+margin: 0 !important;
+padding: 0 !important;
+width: 100vw !important;
+height: 100vh !important;
+overflow: hidden !important;
+}
+/ Hide all elements except the card modal /
+header, main, #toast-container, #qr-camera-modal, #payment-modal,
+#gateway-settings-modal, #offline-register-modal, #edit-modal,
+#confirm-modal, .no-print {
+display: none !important;
+}
+/ Full A4 Flex container for perfect centering /
+#card-modal {
+display: flex !important;
+position: fixed !important;
+inset: 0 !important;
+width: 100vw !important;
+height: 100vh !important;
+background: #ffffff !important;
+align-items: center !important;
+justify-content: center !important;
+padding: 0 !important;
+margin: 0 !important;
+border: none !important;
+box-shadow: none !important;
+z-index: 9999 !important;
+}
+/ Centered printable card */
+#printable-card {
+display: block !important;
+position: relative !important;
+width: 150mm !important;
+max-width: 90% !important;
+padding: 18px 24px !important;
+margin: 0 auto !important;
+box-shadow: none !important;
+border: 3px solid #000000 !important;
+background: #ffffff !important;
+color: #000000 !important;
+border-radius: 18px !important;
+-webkit-print-color-adjust: exact !important;
+print-color-adjust: exact !important;
+page-break-inside: avoid !important;
+box-sizing: border-box !important;
+}
+#printable-card * {
+color: #000000 !important;
+text-shadow: none !important;
+box-sizing: border-box !important;
+}
+#printable-card #modal-nomer-layangan {
+font-size: 3.8rem !important;
+line-height: 1 !important;
+padding-top: 4px !important;
+padding-bottom: 4px !important;
+}
+#printable-card #qrcode canvas,
+#printable-card #qrcode img {
+width: 115px !important;
+height: 115px !important;
+}
+}
+
 #reader video {
-    object-fit: cover !important;
-    border-radius: 1rem;
+object-fit: cover !important;
+border-radius: 1rem;
 }
