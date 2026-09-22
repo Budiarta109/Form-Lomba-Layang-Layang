@@ -1,4 +1,5 @@
-/* STREAMING_CHUNK:Styling A4 print layout and custom scanner video components... /
+/* STREAMING_CHUNK:Styling print layout and custom components... /
+/ Optimized Print Stylesheet for A4 Paper (Centered inside A4 Page) /
 @media print {
 @page {
 size: A4 portrait;
@@ -9,39 +10,47 @@ background: #ffffff !important;
 color: #000000 !important;
 margin: 0 !important;
 padding: 0 !important;
-width: 100vw !important;
-height: 100vh !important;
+width: 100% !important;
+height: 100% !important;
 overflow: hidden !important;
 }
-/ Hide all elements except the card modal /
+/ Hide non-printable UI elements completely /
 header, main, #toast-container, #qr-camera-modal, #payment-modal,
 #gateway-settings-modal, #offline-register-modal, #edit-modal,
 #confirm-modal, .no-print {
 display: none !important;
 }
-/ Full A4 Flex container for perfect centering /
+/ Make card modal wrapper fill the entire A4 canvas with Flexbox centering /
 #card-modal {
 display: flex !important;
-position: fixed !important;
-inset: 0 !important;
-width: 100vw !important;
-height: 100vh !important;
-background: #ffffff !important;
+flex-direction: column !important;
 align-items: center !important;
 justify-content: center !important;
+position: absolute !important;
+top: 0 !important;
+left: 0 !important;
+right: 0 !important;
+bottom: 0 !important;
+width: 100% !important;
+height: 100% !important;
+background: #ffffff !important;
 padding: 0 !important;
 margin: 0 !important;
 border: none !important;
 box-shadow: none !important;
 z-index: 9999 !important;
 }
-/ Centered printable card */
+/ Position printable-card centered symmetrically on the page /
 #printable-card {
 display: block !important;
 position: relative !important;
-width: 150mm !important;
-max-width: 90% !important;
-padding: 18px 24px !important;
+top: auto !important;
+left: auto !important;
+transform: none !important;
+-webkit-transform: none !important;
+width: 155mm !important;
+max-width: 88% !important;
+padding: 20px 24px !important;
 margin: 0 auto !important;
 box-shadow: none !important;
 border: 3px solid #000000 !important;
@@ -51,12 +60,17 @@ border-radius: 18px !important;
 -webkit-print-color-adjust: exact !important;
 print-color-adjust: exact !important;
 page-break-inside: avoid !important;
+break-inside: avoid !important;
 box-sizing: border-box !important;
 }
+/ Reset colors and spacing inside the badge for print */
 #printable-card * {
 color: #000000 !important;
 text-shadow: none !important;
 box-sizing: border-box !important;
+}
+#printable-card .space-y-4 > * + * {
+margin-top: 0.75rem !important;
 }
 #printable-card #modal-nomer-layangan {
 font-size: 3.8rem !important;
@@ -64,10 +78,27 @@ line-height: 1 !important;
 padding-top: 4px !important;
 padding-bottom: 4px !important;
 }
+#printable-card .p-4 {
+padding: 0.85rem !important;
+}
+#printable-card .py-4 {
+padding-top: 0.75rem !important;
+padding-bottom: 0.75rem !important;
+}
+#printable-card .space-y-2.5 > * + * {
+margin-top: 0.4rem !important;
+}
 #printable-card #qrcode canvas,
 #printable-card #qrcode img {
 width: 115px !important;
 height: 115px !important;
+}
+#printable-card .bg-slate-900,
+#printable-card .bg-slate-950,
+#printable-card .bg-slate-900/90,
+#printable-card .bg-amber-500/10 {
+background-color: #ffffff !important;
+border-color: #000000 !important;
 }
 }
 
