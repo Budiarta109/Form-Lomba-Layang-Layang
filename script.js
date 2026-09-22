@@ -1,3 +1,37 @@
+// Category Price Mapping Matrix
+const CATEGORY_PRICES = {
+    "Bebean": 50000,
+    "Janggan": 75000,
+    "Janggan Buntut": 75000,
+    "Pecukan": 50000,
+    "Kreasi Baru": 60000,
+    "Big Size / Rare Angon": 100000
+};
+
+function formatRupiah(amount) {
+    return "Rp " + amount.toLocaleString('id-ID');
+}
+
+function getCategoryPrice(categoryName) {
+    return CATEGORY_PRICES[categoryName] || 50000;
+}
+
+function updateCategoryFeeDisplay() {
+    const selectEl = document.getElementById('kategori');
+    const infoBox = document.getElementById('fee-info-box');
+    const amountText = document.getElementById('fee-amount-text');
+    if (!selectEl || !infoBox || !amountText) return;
+
+    const val = selectEl.value;
+    if (val) {
+        const price = getCategoryPrice(val);
+        amountText.textContent = formatRupiah(price);
+        infoBox.classList.remove('hidden');
+    } else {
+        infoBox.classList.add('hidden');
+    }
+}
+
 // LocalStorage and SessionStorage keys
 const STORAGE_KEY = 'BALI_KITE_REGISTRATIONS_DATA';
 const GATEWAY_SETTINGS_KEY = 'BALI_KITE_GATEWAY_CONFIG';
@@ -16,20 +50,18 @@ let gatewayConfig = {
 
 // Firebase Cloud Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
-    authDomain: "form-lomba-layangan.firebaseapp.com",
-    projectId: "form-lomba-layangan",
-    storageBucket: "form-lomba-layangan.firebasestorage.app",
-    messagingSenderId: "742312467145",
-    appId: "1:742312467145:web:3ff6fba776a731af690b18",
-    measurementId: "G-1PQ22080GK"
+    apiKey: "AIzaSyDummyKeyForBaliKiteFest2026",
+    authDomain: "semaya-kite-festival.firebaseapp.com",
+    projectId: "semaya-kite-festival",
+    storageBucket: "semaya-kite-festival.appspot.com",
+    messagingSenderId: "987654321012",
+    appId: "1:987654321012:web:a1b2c3d4e5f6g7h8i9j0"
 };
 
 let db = null;
 let registrationsRef = null;
 let isCloudActive = false;
 
-// Auto-detect dummy credentials to prevent unnecessary Firestore backend requests
 const isDummyConfig = !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("Dummy") || firebaseConfig.projectId === "semaya-kite-festival";
 
 if (!isDummyConfig) {
@@ -52,12 +84,9 @@ window.addEventListener('DOMContentLoaded', () => {
     listenToCloudRegistrations();
 });
 
-// Navigation & UI Helper Functions
 function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
-    if (menu) {
-        menu.classList.toggle('hidden');
-    }
+    if (menu) menu.classList.toggle('hidden');
 }
 
 function loadGatewaySettings() {
@@ -65,9 +94,7 @@ function loadGatewaySettings() {
     if (stored) {
         try {
             gatewayConfig = { ...gatewayConfig, ...JSON.parse(stored) };
-        } catch (e) {
-            console.error("Failed to load gateway config:", e);
-        }
+        } catch (e) {}
     }
 }
 
@@ -260,9 +287,7 @@ function switchTab(tabId) {
     contents.forEach(el => el.classList.add('hidden'));
 
     const target = document.getElementById(tabId);
-    if (target) {
-        target.classList.remove('hidden');
-    }
+    if (target) target.classList.remove('hidden');
 
     const navBtns = {
         'form-tab': 'nav-form-tab',
@@ -384,6 +409,9 @@ function handleRegistrationSubmit(event) {
         nomerVal = nomerVal.padStart(3, '0');
     }
 
+    const priceNum = getCategoryPrice(kategoriVal);
+    const feeStr = formatRupiah(priceNum);
+
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
 
@@ -395,7 +423,7 @@ function handleRegistrationSubmit(event) {
         nomerLayangan: nomerVal,
         seriLayangan: seriVal,
         statusPembayaran: 'PENDING',
-        biaya: 'Rp 50.000',
+        biaya: feeStr,
         statusKehadiran: 'BELUM_HADIR',
         waktuKehadiran: '-',
         createdAt: dateStr
@@ -407,6 +435,8 @@ function handleRegistrationSubmit(event) {
 function resetForm() {
     const form = document.getElementById('kite-registration-form');
     if (form) form.reset();
+    const feeInfo = document.getElementById('fee-info-box');
+    if (feeInfo) feeInfo.classList.add('hidden');
     validateNomerAvailability();
 }
 
@@ -426,11 +456,13 @@ function openPaymentModal(data) {
     const namaEl = document.getElementById('pay-nama');
     const katSeriEl = document.getElementById('pay-kategori-seri');
     const nomerEl = document.getElementById('pay-nomer');
+    const totalBiayaEl = document.getElementById('pay-total-biaya');
 
     if (orderIdEl) orderIdEl.textContent = orderId;
     if (namaEl) namaEl.textContent = data.namaLayangan;
     if (katSeriEl) katSeriEl.textContent = `${data.kategori} - ${data.seriLayangan}`;
     if (nomerEl) nomerEl.textContent = data.nomerLayangan;
+    if (totalBiayaEl) totalBiayaEl.textContent = data.biaya;
 
     const qrContainer = document.getElementById('payment-qris-code');
     if (qrContainer) {
@@ -477,7 +509,7 @@ function simulasikanUangMasuk(channelSelected) {
     setTimeout(() => {
         if (progressBar) progressBar.style.width = '60%';
         if (statusTitle) statusTitle.textContent = `Sistem Mendeteksi Transfer (${channelSelected})...`;
-        if (statusDesc) statusDesc.textContent = 'Menerima notifikasi mutasi kredit masuk sebesar Rp 50.000 dari bank';
+        if (statusDesc) statusDesc.textContent = `Menerima mutasi kredit masuk sebesar ${pendingRegistration.biaya}`;
     }, 800);
 
     setTimeout(() => {
@@ -915,19 +947,23 @@ async function handleOfflineRegisterSubmit(event) {
         nomerVal = nomerVal.padStart(3, '0');
     }
 
+    const kategoriVal = document.getElementById('off-kategori')?.value || 'Bebean';
+    const priceNum = getCategoryPrice(kategoriVal);
+    const feeStr = formatRupiah(priceNum);
+
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
 
     const offlineData = {
         id: `KITE-OFF-${Math.floor(1000 + Math.random() * 9000)}`,
-        kategori: document.getElementById('off-kategori')?.value || '',
+        kategori: kategoriVal,
         namaLayangan: document.getElementById('off-namaLayangan')?.value.trim() || '',
         alamatLayangan: document.getElementById('off-alamatLayangan')?.value.trim() || '',
         nomerLayangan: nomerVal,
         seriLayangan: document.getElementById('off-seriLayangan')?.value || '',
         statusPembayaran: document.getElementById('off-statusBayar')?.value || 'LUNAS',
         metodePembayaran: document.getElementById('off-metodeBayar')?.value || 'Tunai',
-        biaya: 'Rp 50.000',
+        biaya: feeStr,
         statusKehadiran: 'BELUM_HADIR',
         waktuKehadiran: '-',
         createdAt: dateStr
@@ -977,11 +1013,15 @@ async function handleSaveEdit(event) {
     const index = registrations.findIndex(r => r.id === id);
 
     if (index !== -1) {
-        registrations[index].kategori = document.getElementById('edit-kategori')?.value || registrations[index].kategori;
+        const katVal = document.getElementById('edit-kategori')?.value || registrations[index].kategori;
+        const priceNum = getCategoryPrice(katVal);
+
+        registrations[index].kategori = katVal;
         registrations[index].namaLayangan = document.getElementById('edit-namaLayangan')?.value.trim() || registrations[index].namaLayangan;
         registrations[index].alamatLayangan = document.getElementById('edit-alamatLayangan')?.value.trim() || registrations[index].alamatLayangan;
         registrations[index].nomerLayangan = document.getElementById('edit-nomerLayangan')?.value.trim() || registrations[index].nomerLayangan;
         registrations[index].seriLayangan = document.getElementById('edit-seriLayangan')?.value || registrations[index].seriLayangan;
+        registrations[index].biaya = formatRupiah(priceNum);
 
         await syncRecordToCloud(registrations[index]);
         closeEditModal();
@@ -1063,7 +1103,6 @@ function handleSearchStatus(event) {
     resultBox.classList.remove('hidden');
 
     if (found) {
-        const isHadir = found.statusKehadiran === 'HADIR';
         resultBox.innerHTML = `
             <div class="bg-slate-950/60 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 mb-4 gap-2">
@@ -1079,9 +1118,8 @@ function handleSearchStatus(event) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-300 mb-6 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
                     <div><span class="text-slate-500 text-xs block">Kategori:</span> <span class="font-bold text-white">${found.kategori}</span></div>
                     <div><span class="text-slate-500 text-xs block">Seri:</span> <span class="font-bold text-white">${found.seriLayangan}</span></div>
-                    <div><span class="text-slate-500 text-xs block">Status Pembayaran:</span> <span class="font-bold text-emerald-400">${found.statusPembayaran || 'LUNAS'}</span></div>
-                    <div><span class="text-slate-500 text-xs block">Status Kehadiran Lapangan:</span> <span class="font-bold ${isHadir ? 'text-emerald-400' : 'text-red-400'}">${isHadir ? 'HADIR' : 'BELUM HADIR'}</span></div>
-                    <div class="sm:col-span-2"><span class="text-slate-500 text-xs block">Alamat / Asal Banjar:</span> <span class="font-medium text-slate-200">${found.alamatLayangan}</span></div>
+                    <div><span class="text-slate-500 text-xs block">Status & Biaya:</span> <span class="font-bold text-emerald-400">${found.statusPembayaran || 'LUNAS'} (${found.biaya})</span></div>
+                    <div><span class="text-slate-500 text-xs block">Asal Banjar:</span> <span class="font-medium text-slate-200">${found.alamatLayangan}</span></div>
                 </div>
 
                 <button onclick='openCardModalById("${found.id}")' class="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-slate-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/10">
@@ -1151,23 +1189,20 @@ function renderAdminTable() {
     }
 
     filtered.forEach(r => {
-        const isHadir = r.statusKehadiran === 'HADIR';
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-900/60 transition';
         tr.innerHTML = `
             <td class="p-4 font-mono font-bold text-amber-400 text-base">${r.nomerLayangan}</td>
             <td class="p-4 font-bold text-white">${r.namaLayangan}</td>
-            <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-200">${r.kategori}</span></td>
+            <td class="p-4">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-200 block w-max">${r.kategori}</span>
+                <span class="text-[11px] font-mono text-emerald-400 mt-1 block">${r.biaya || 'Rp 50.000'}</span>
+            </td>
             <td class="p-4 text-xs text-slate-300">${r.seriLayangan}</td>
             <td class="p-4">
-                ${isHadir 
-                    ? `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                         <i class="fa-solid fa-circle-check text-[10px]"></i> <span>HADIR</span>
-                       </span>`
-                    : `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/30">
-                         <i class="fa-solid fa-clock text-[10px]"></i> <span>BELUM</span>
-                       </span>`
-                }
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    ${r.statusPembayaran || 'LUNAS'}
+                </span>
             </td>
             <td class="p-4 text-xs text-slate-400 max-w-xs truncate">${r.alamatLayangan}</td>
             <td class="p-4 text-center">
@@ -1245,7 +1280,7 @@ function exportToCSV() {
                 'Kategori': r.kategori,
                 'Seri': r.seriLayangan,
                 'Alamat / Asal Banjar': r.alamatLayangan,
-                'Biaya': r.biaya || 'Rp 50.000',
+                'Biaya Pendaftaran': r.biaya || 'Rp 50.000',
                 'Status Bayar': r.statusPembayaran || 'LUNAS',
                 'Metode Bayar': r.metodePembayaran || 'Otomatis',
                 'Status Kehadiran': r.statusKehadiran === 'HADIR' ? 'HADIR' : 'BELUM HADIR',
@@ -1257,7 +1292,7 @@ function exportToCSV() {
 
             worksheet['!cols'] = [
                 { wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 25 },
-                { wch: 22 }, { wch: 22 }, { wch: 35 }, { wch: 12 },
+                { wch: 22 }, { wch: 22 }, { wch: 35 }, { wch: 18 },
                 { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 22 }, { wch: 20 }
             ];
 
@@ -1266,45 +1301,30 @@ function exportToCSV() {
             const categories = ["Bebean", "Janggan", "Janggan Buntut", "Pecukan", "Kreasi Baru", "Big Size / Rare Angon"];
             const summaryData = categories.map(cat => {
                 const count = registrations.filter(r => r.kategori === cat).length;
-                const hadir = registrations.filter(r => r.kategori === cat && r.statusKehadiran === 'HADIR').length;
+                const totalFeeNum = registrations.filter(r => r.kategori === cat).reduce((sum, r) => {
+                    const numeric = parseInt((r.biaya || "50000").replace(/[^0-9]/g, '')) || 50000;
+                    return sum + numeric;
+                }, 0);
                 return {
                     'Kategori Layangan': cat,
                     'Total Terdaftar': count,
-                    'Check-In Hadir': hadir,
-                    'Belum Hadir': count - hadir,
-                    '% Kehadiran': count > 0 ? `${Math.round((hadir / count) * 100)}%` : '0%'
+                    'Tarif per Peserta': formatRupiah(getCategoryPrice(cat)),
+                    'Total Pendapatan': formatRupiah(totalFeeNum)
                 };
             });
 
             const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
-            summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
-            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Rekap Statistik");
+            summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Rekap Pendapatan");
 
             const filename = `Data_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, filename);
             showToast('File Excel Spreadsheet berhasil diunduh!', 'success');
             return;
         } catch (e) {
-            console.error("SheetJS export error, falling back to CSV:", e);
+            console.error("SheetJS export error:", e);
         }
     }
-
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    csvContent += "ID,Nomer Layangan,Nama Layangan,Kategori,Seri,Alamat/Asal Banjar,Status Pembayaran,Status Kehadiran,Waktu Check-In,Tanggal Daftar\n";
-
-    registrations.forEach(r => {
-        let row = `"${r.id}","${r.nomerLayangan}","${r.namaLayangan}","${r.kategori}","${r.seriLayangan}","${r.alamatLayangan}","${r.statusPembayaran || 'LUNAS'}","${r.statusKehadiran || 'BELUM_HADIR'}","${r.waktuKehadiran || '-'}","${r.createdAt}"`;
-        csvContent += row + "\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Data_Pendaftaran_Layangan_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Data berhasil diekspor dalam format CSV.', 'success');
 }
 
 function showToast(message, type = 'info') {
@@ -1339,7 +1359,7 @@ function showToast(message, type = 'info') {
     }, 3500);
 }
 
-// Explicit Global Bindings for HTML Event Handlers
+// Global Event Bindings
 window.toggleMobileMenu = toggleMobileMenu;
 window.switchTab = switchTab;
 window.switchAdminSubTab = switchAdminSubTab;
@@ -1369,12 +1389,3 @@ window.openCardModalById = openCardModalById;
 window.closeModal = closeModal;
 window.renderAdminTable = renderAdminTable;
 window.openCardModal = openCardModal;
-window.exportToCSV = exportToCSV;
-window.saveGatewaySettings = saveGatewaySettings;
-window.openGatewaySettingsModal = openGatewaySettingsModal;
-window.closeGatewaySettingsModal = closeGatewaySettingsModal;
-window.closeConfirmModal = closeConfirmModal;
-window.openAuthModal = openAuthModal;
-window.closeAuthModal = closeAuthModal;
-window.handlePanitiaLogin = handlePanitiaLogin;
-window.logoutPanitia = logoutPanitia;
