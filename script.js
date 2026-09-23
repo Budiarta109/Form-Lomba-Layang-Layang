@@ -32,12 +32,10 @@ function updateCategoryFeeDisplay() {
     }
 }
 
-// LocalStorage and SessionStorage keys
 const STORAGE_KEY = 'BALI_KITE_REGISTRATIONS_DATA';
 const GATEWAY_SETTINGS_KEY = 'BALI_KITE_GATEWAY_CONFIG';
 const PANITIA_AUTH_KEY = 'BALI_KITE_PANITIA_AUTH';
 
-// State variables
 let registrations = [];
 let confirmActionCallback = null;
 let pendingRegistration = null;
@@ -48,15 +46,14 @@ let gatewayConfig = {
     midtransClientKey: ''
 };
 
-// Firebase Cloud Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
-  authDomain: "form-lomba-layangan.firebaseapp.com",
-  projectId: "form-lomba-layangan",
-  storageBucket: "form-lomba-layangan.firebasestorage.app",
-  messagingSenderId: "742312467145",
-  appId: "1:742312467145:web:3ff6fba776a731af690b18",
-  measurementId: "G-1PQ22080GK"
+    apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
+    authDomain: "form-lomba-layangan.firebaseapp.com",
+    projectId: "form-lomba-layangan",
+    storageBucket: "form-lomba-layangan.firebasestorage.app",
+    messagingSenderId: "742312467145",
+    appId: "1:742312467145:web:3ff6fba776a731af690b18",
+    measurementId: "G-1PQ22080GK"
 };
 
 let db = null;
@@ -246,25 +243,21 @@ function closeAuthModal() {
 }
 
 async function handlePanitiaLogin(event) {
-async function handlePanitiaLogin(event) {
     event.preventDefault();
     const pinVal = document.getElementById('panitia-pin-input')?.value.trim();
     if (!pinVal) return;
 
     let isAuthenticated = false;
 
-    // Fallback default checks for offline / emergency access
     const defaultPins = ['123456', 'admin123', 'semaya2026'];
     if (defaultPins.includes(pinVal)) {
         isAuthenticated = true;
     } else if (db && isCloudActive && !isDummyConfig) {
         try {
-            // Query Firestore 'panitia' collection for matching PIN/Password
             const snapshot = await db.collection('panitia').where('pin', '==', pinVal).get();
             if (!snapshot.empty) {
                 isAuthenticated = true;
             } else {
-                // Check if collection is empty, create default document if needed
                 const allPanitia = await db.collection('panitia').get();
                 if (allPanitia.empty) {
                     await db.collection('panitia').add({ username: 'admin', pin: '123456', role: 'Super Admin' });
@@ -297,25 +290,11 @@ async function handlePanitiaLogin(event) {
     }
 }
 
-    if (isAuthenticated) {
-        sessionStorage.setItem(PANITIA_AUTH_KEY, 'true');
-        checkPanitiaAuthUI();
-        closeAuthModal();
-        showToast('Login Panitia Berhasil (Database Verified)!', 'success');
-        
-        if (pendingTargetTab) {
-            const tabToOpen = pendingTargetTab;
-            pendingTargetTab = null;
-            switchTab(tabToOpen);
-        }
-    } else {
-        showToast('PIN / Password Panitia Salah!', 'error');
-        const inputEl = document.getElementById('panitia-pin-input');
-        if (inputEl) {
-            inputEl.value = '';
-            inputEl.focus();
-        }
-    }
+function logoutPanitia() {
+    sessionStorage.removeItem(PANITIA_AUTH_KEY);
+    checkPanitiaAuthUI();
+    switchTab('form-tab');
+    showToast('Berhasil keluar dari Mode Panitia.', 'info');
 }
 
 function switchTab(tabId) {
@@ -1430,3 +1409,12 @@ window.openCardModalById = openCardModalById;
 window.closeModal = closeModal;
 window.renderAdminTable = renderAdminTable;
 window.openCardModal = openCardModal;
+window.handlePanitiaLogin = handlePanitiaLogin;
+window.logoutPanitia = logoutPanitia;
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.openGatewaySettingsModal = openGatewaySettingsModal;
+window.closeGatewaySettingsModal = closeGatewaySettingsModal;
+window.saveGatewaySettings = saveGatewaySettings;
+window.exportToCSV = exportToCSV;
+window.updateCategoryFeeDisplay = updateCategoryFeeDisplay;
