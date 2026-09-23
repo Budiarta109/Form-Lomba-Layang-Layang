@@ -1289,15 +1289,14 @@ function exportToCSV() {
         try {
             const workbook = XLSX.utils.book_new();
 
-            // Helper to map record
-            const mapRecordForExcel = (r, idx) => ({
+            const mapRecord = (r, idx) => ({
                 'No': idx + 1,
                 'ID Pendaftaran': r.id,
                 'No. Dada': r.nomerLayangan,
                 'Nama Layangan': r.namaLayangan,
                 'Kategori': r.kategori,
                 'Seri': r.seriLayangan,
-                'Metode Daftar': r.id.includes('OFF') ? 'Offline (Tunai)' : 'Online (Mandiri)',
+                'Metode Pendaftaran': r.id.includes('OFF') ? 'Offline (Panitia)' : 'Online (Mandiri)',
                 'Alamat / Asal Banjar': r.alamatLayangan,
                 'Biaya Pendaftaran': r.biaya || 'Rp 50.000',
                 'Status Bayar': r.statusPembayaran || 'LUNAS',
@@ -1314,51 +1313,51 @@ function exportToCSV() {
             ];
 
             // 1. Sheet Utama: Semua Data Pendaftar
-            const allData = registrations.map(mapRecordForExcel);
+            const allData = registrations.map(mapRecord);
             const allWs = XLSX.utils.json_to_sheet(allData);
             allWs['!cols'] = standardCols;
             XLSX.utils.book_append_sheet(workbook, allWs, "Semua Peserta");
 
-            // 2. Sheet Berdasarkan Kategori
+            // 2. Sheet per Kategori (Beda Sheet)
             const categories = ["Bebean", "Janggan", "Janggan Buntut", "Pecukan", "Kreasi Baru", "Big Size / Rare Angon"];
             categories.forEach(cat => {
                 const list = registrations.filter(r => r.kategori === cat);
                 if (list.length > 0) {
-                    const data = list.map(mapRecordForExcel);
+                    const data = list.map(mapRecord);
                     const ws = XLSX.utils.json_to_sheet(data);
                     ws['!cols'] = standardCols;
-                    XLSX.utils.book_append_sheet(workbook, ws, `Cat - ${cat.substring(0, 15)}`);
+                    XLSX.utils.book_append_sheet(workbook, ws, `Kat-${cat.substring(0, 15)}`);
                 }
             });
 
-            // 3. Sheet Berdasarkan Seri
+            // 3. Sheet per Seri (Beda Sheet)
             const seriesList = ["Seri A (Dewasa / Remaja)", "Seri B (Anak-anak)", "Seri C (Eksibisi / Bebas)", "Seri VIP / Khusus"];
             seriesList.forEach(seri => {
                 const list = registrations.filter(r => r.seriLayangan === seri);
                 if (list.length > 0) {
-                    const data = list.map(mapRecordForExcel);
+                    const data = list.map(mapRecord);
                     const ws = XLSX.utils.json_to_sheet(data);
                     ws['!cols'] = standardCols;
-                    const sheetName = seri.includes('Dewasa') ? 'Seri A' : seri.includes('Anak') ? 'Seri B' : seri.includes('Eksibisi') ? 'Seri C' : 'Seri VIP';
+                    const sheetName = seri.includes('Dewasa') ? 'Seri-A' : seri.includes('Anak') ? 'Seri-B' : seri.includes('Eksibisi') ? 'Seri-C' : 'Seri-VIP';
                     XLSX.utils.book_append_sheet(workbook, ws, sheetName);
                 }
             });
 
-            // 4. Sheet Berdasarkan Metode Pendaftaran (Online vs Offline)
+            // 4. Sheet per Metode Pendaftaran (Online vs Offline - Beda Sheet)
             const onlineList = registrations.filter(r => !r.id.includes('OFF'));
             if (onlineList.length > 0) {
-                const data = onlineList.map(mapRecordForExcel);
+                const data = onlineList.map(mapRecord);
                 const ws = XLSX.utils.json_to_sheet(data);
                 ws['!cols'] = standardCols;
-                XLSX.utils.book_append_sheet(workbook, ws, "Pendaftar Online");
+                XLSX.utils.book_append_sheet(workbook, ws, "Online");
             }
 
             const offlineList = registrations.filter(r => r.id.includes('OFF'));
             if (offlineList.length > 0) {
-                const data = offlineList.map(mapRecordForExcel);
+                const data = offlineList.map(mapRecord);
                 const ws = XLSX.utils.json_to_sheet(data);
                 ws['!cols'] = standardCols;
-                XLSX.utils.book_append_sheet(workbook, ws, "Pendaftar Offline");
+                XLSX.utils.book_append_sheet(workbook, ws, "Offline");
             }
 
             // 5. Sheet Rekap Pendapatan
@@ -1380,9 +1379,9 @@ function exportToCSV() {
             summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
             XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Rekap Pendapatan");
 
-            const filename = `Rekap_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
+            const filename = `Data_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, filename);
-            showToast('File Excel Spreadsheet dengan multi-tabel kategori, seri & metode berhasil diunduh!', 'success');
+            showToast('File Excel dengan Sheet terpisah untuk Kategori, Seri, & Metode berhasil diunduh!', 'success');
             return;
         } catch (e) {
             console.error("SheetJS export error:", e);
