@@ -252,7 +252,6 @@ async function handlePanitiaLogin(event) {
 
     let isAuthenticated = false;
 
-    // Database Cloud Authentication (No default static PINs)
     if (db && isCloudActive && !isDummyConfig) {
         try {
             const snapshot = await db.collection('panitia').where('pin', '==', pinVal).get();
@@ -1290,13 +1289,15 @@ function exportToCSV() {
         try {
             const workbook = XLSX.utils.book_new();
 
-            const excelData = registrations.map((r, idx) => ({
+            // Helper to map record
+            const mapRecordForExcel = (r, idx) => ({
                 'No': idx + 1,
                 'ID Pendaftaran': r.id,
                 'No. Dada': r.nomerLayangan,
                 'Nama Layangan': r.namaLayangan,
                 'Kategori': r.kategori,
                 'Seri': r.seriLayangan,
+                'Metode Daftar': r.id.includes('OFF') ? 'Offline (Tunai)' : 'Online (Mandiri)',
                 'Alamat / Asal Banjar': r.alamatLayangan,
                 'Biaya Pendaftaran': r.biaya || 'Rp 50.000',
                 'Status Bayar': r.statusPembayaran || 'LUNAS',
@@ -1304,19 +1305,63 @@ function exportToCSV() {
                 'Status Kehadiran': r.statusKehadiran === 'HADIR' ? 'HADIR' : 'BELUM HADIR',
                 'Waktu Check-In': r.waktuKehadiran || '-',
                 'Tanggal Daftar': r.createdAt
-            }));
+            });
 
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-            worksheet['!cols'] = [
-                { wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 25 },
-                { wch: 22 }, { wch: 22 }, { wch: 35 }, { wch: 18 },
-                { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 22 }, { wch: 20 }
+            const standardCols = [
+                { wch: 5 }, { wch: 15 }, { wch: 10 }, { wch: 22 },
+                { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 30 },
+                { wch: 16 }, { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 18 }
             ];
 
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Pendaftar");
+            // 1. Sheet Utama: Semua Data Pendaftar
+            const allData = registrations.map(mapRecordForExcel);
+            const allWs = XLSX.utils.json_to_sheet(allData);
+            allWs['!cols'] = standardCols;
+            XLSX.utils.book_append_sheet(workbook, allWs, "Semua Peserta");
 
+            // 2. Sheet Berdasarkan Kategori
             const categories = ["Bebean", "Janggan", "Janggan Buntut", "Pecukan", "Kreasi Baru", "Big Size / Rare Angon"];
+            categories.forEach(cat => {
+                const list = registrations.filter(r => r.kategori === cat);
+                if (list.length > 0) {
+                    const data = list.map(mapRecordForExcel);
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    ws['!cols'] = standardCols;
+                    XLSX.utils.book_append_sheet(workbook, ws, `Cat - ${cat.substring(0, 15)}`);
+                }
+            });
+
+            // 3. Sheet Berdasarkan Seri
+            const seriesList = ["Seri A (Dewasa / Remaja)", "Seri B (Anak-anak)", "Seri C (Eksibisi / Bebas)", "Seri VIP / Khusus"];
+            seriesList.forEach(seri => {
+                const list = registrations.filter(r => r.seriLayangan === seri);
+                if (list.length > 0) {
+                    const data = list.map(mapRecordForExcel);
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    ws['!cols'] = standardCols;
+                    const sheetName = seri.includes('Dewasa') ? 'Seri A' : seri.includes('Anak') ? 'Seri B' : seri.includes('Eksibisi') ? 'Seri C' : 'Seri VIP';
+                    XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+                }
+            });
+
+            // 4. Sheet Berdasarkan Metode Pendaftaran (Online vs Offline)
+            const onlineList = registrations.filter(r => !r.id.includes('OFF'));
+            if (onlineList.length > 0) {
+                const data = onlineList.map(mapRecordForExcel);
+                const ws = XLSX.utils.json_to_sheet(data);
+                ws['!cols'] = standardCols;
+                XLSX.utils.book_append_sheet(workbook, ws, "Pendaftar Online");
+            }
+
+            const offlineList = registrations.filter(r => r.id.includes('OFF'));
+            if (offlineList.length > 0) {
+                const data = offlineList.map(mapRecordForExcel);
+                const ws = XLSX.utils.json_to_sheet(data);
+                ws['!cols'] = standardCols;
+                XLSX.utils.book_append_sheet(workbook, ws, "Pendaftar Offline");
+            }
+
+            // 5. Sheet Rekap Pendapatan
             const summaryData = categories.map(cat => {
                 const count = registrations.filter(r => r.kategori === cat).length;
                 const totalFeeNum = registrations.filter(r => r.kategori === cat).reduce((sum, r) => {
@@ -1335,12 +1380,13 @@ function exportToCSV() {
             summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
             XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Rekap Pendapatan");
 
-            const filename = `Data_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
+            const filename = `Rekap_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(workbook, filename);
-            showToast('File Excel Spreadsheet berhasil diunduh!', 'success');
+            showToast('File Excel Spreadsheet dengan multi-tabel kategori, seri & metode berhasil diunduh!', 'success');
             return;
         } catch (e) {
             console.error("SheetJS export error:", e);
+            showToast('Gagal mengekspor file Excel.', 'error');
         }
     }
 }
