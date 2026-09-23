@@ -688,7 +688,7 @@ function handleAttendanceScan(event) {
                         <h4 class="text-xl font-bold font-traditional text-white">${found.namaLayangan}</h4>
                     </div>
                     <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-mono font-bold">
-                        No. Dada: ${found.nomerLayangan}
+                        No. Layangan: ${found.nomerLayangan}
                     </span>
                 </div>
 
@@ -866,7 +866,7 @@ function renderAvailabilityGrid() {
         card.className = 'bg-slate-900/80 border border-red-500/30 rounded-2xl p-4 flex flex-col justify-between hover:border-red-500/60 transition shadow-sm';
         card.innerHTML = `
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">No. Dada: ${item.nomerLayangan}</span>
+                <span class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">No. Layangan: ${item.nomerLayangan}</span>
                 <span class="text-[10px] uppercase font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-md">Terisi</span>
             </div>
             <div class="font-bold text-white text-sm truncate" title="${item.namaLayangan}">${item.namaLayangan}</div>
