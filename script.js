@@ -32,10 +32,12 @@ function updateCategoryFeeDisplay() {
     }
 }
 
+// LocalStorage and SessionStorage keys
 const STORAGE_KEY = 'BALI_KITE_REGISTRATIONS_DATA';
 const GATEWAY_SETTINGS_KEY = 'BALI_KITE_GATEWAY_CONFIG';
 const PANITIA_AUTH_KEY = 'BALI_KITE_PANITIA_AUTH';
 
+// State variables
 let registrations = [];
 let confirmActionCallback = null;
 let pendingRegistration = null;
@@ -46,14 +48,15 @@ let gatewayConfig = {
     midtransClientKey: ''
 };
 
+// Firebase Cloud Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
-    authDomain: "form-lomba-layangan.firebaseapp.com",
-    projectId: "form-lomba-layangan",
-    storageBucket: "form-lomba-layangan.firebasestorage.app",
-    messagingSenderId: "742312467145",
-    appId: "1:742312467145:web:3ff6fba776a731af690b18",
-    measurementId: "G-1PQ22080GK"
+  apiKey: "AIzaSyDY9xy1uwHxJ30KcMI09M1VX6_w0xL_c44",
+  authDomain: "form-lomba-layangan.firebaseapp.com",
+  projectId: "form-lomba-layangan",
+  storageBucket: "form-lomba-layangan.firebasestorage.app",
+  messagingSenderId: "742312467145",
+  appId: "1:742312467145:web:3ff6fba776a731af690b18",
+  measurementId: "G-1PQ22080GK"
 };
 
 let db = null;
@@ -249,24 +252,19 @@ async function handlePanitiaLogin(event) {
 
     let isAuthenticated = false;
 
-    const defaultPins = ['123456', 'admin123', 'semaya2026'];
-    if (defaultPins.includes(pinVal)) {
-        isAuthenticated = true;
-    } else if (db && isCloudActive && !isDummyConfig) {
+    // Database Cloud Authentication (No default static PINs)
+    if (db && isCloudActive && !isDummyConfig) {
         try {
             const snapshot = await db.collection('panitia').where('pin', '==', pinVal).get();
             if (!snapshot.empty) {
                 isAuthenticated = true;
-            } else {
-                const allPanitia = await db.collection('panitia').get();
-                if (allPanitia.empty) {
-                    await db.collection('panitia').add({ username: 'admin', pin: '123456', role: 'Super Admin' });
-                    if (pinVal === '123456') isAuthenticated = true;
-                }
             }
         } catch (e) {
-            console.log("Firestore auth fallback error:", e);
+            console.log("Firestore auth query error:", e);
         }
+    } else {
+        showToast('Koneksi Cloud Database tidak aktif. Harap hubungkan internet.', 'error');
+        return;
     }
 
     if (isAuthenticated) {
@@ -281,7 +279,7 @@ async function handlePanitiaLogin(event) {
             switchTab(tabToOpen);
         }
     } else {
-        showToast('PIN / Password Panitia Salah!', 'error');
+        showToast('PIN / Password Panitia Salah atau Tidak Terdaftar di Database!', 'error');
         const inputEl = document.getElementById('panitia-pin-input');
         if (inputEl) {
             inputEl.value = '';
