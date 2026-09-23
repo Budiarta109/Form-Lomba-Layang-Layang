@@ -1128,7 +1128,7 @@ function handleSearchStatus(event) {
                         <h3 class="text-2xl font-bold font-traditional text-white">${found.namaLayangan}</h3>
                     </div>
                     <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
-                        No. Dada: ${found.nomerLayangan}
+                        No. Layangan: ${found.nomerLayangan}
                     </span>
                 </div>
 
@@ -1296,7 +1296,7 @@ function exportToCSV() {
             const mapRecord = (r, idx) => ({
                 'No': idx + 1,
                 'ID Pendaftaran': r.id,
-                'No. Dada': r.nomerLayangan,
+                'No. Layangan': r.nomerLayangan,
                 'Nama Layangan': r.namaLayangan,
                 'Kategori': r.kategori,
                 'Seri': r.seriLayangan,
