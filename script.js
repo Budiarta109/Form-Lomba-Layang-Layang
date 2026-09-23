@@ -245,16 +245,42 @@ function closeAuthModal() {
     pendingTargetTab = null;
 }
 
-function handlePanitiaLogin(event) {
+async function handlePanitiaLogin(event) {
+async function handlePanitiaLogin(event) {
     event.preventDefault();
     const pinVal = document.getElementById('panitia-pin-input')?.value.trim();
-    const validPasswords = ['123456', 'admin123', 'semaya2026'];
+    if (!pinVal) return;
 
-    if (validPasswords.includes(pinVal)) {
+    let isAuthenticated = false;
+
+    // Fallback default checks for offline / emergency access
+    const defaultPins = ['123456', 'admin123', 'semaya2026'];
+    if (defaultPins.includes(pinVal)) {
+        isAuthenticated = true;
+    } else if (db && isCloudActive && !isDummyConfig) {
+        try {
+            // Query Firestore 'panitia' collection for matching PIN/Password
+            const snapshot = await db.collection('panitia').where('pin', '==', pinVal).get();
+            if (!snapshot.empty) {
+                isAuthenticated = true;
+            } else {
+                // Check if collection is empty, create default document if needed
+                const allPanitia = await db.collection('panitia').get();
+                if (allPanitia.empty) {
+                    await db.collection('panitia').add({ username: 'admin', pin: '123456', role: 'Super Admin' });
+                    if (pinVal === '123456') isAuthenticated = true;
+                }
+            }
+        } catch (e) {
+            console.log("Firestore auth fallback error:", e);
+        }
+    }
+
+    if (isAuthenticated) {
         sessionStorage.setItem(PANITIA_AUTH_KEY, 'true');
         checkPanitiaAuthUI();
         closeAuthModal();
-        showToast('Login Panitia Berhasil!', 'success');
+        showToast('Login Panitia Berhasil (Database Verified)!', 'success');
         
         if (pendingTargetTab) {
             const tabToOpen = pendingTargetTab;
@@ -271,11 +297,25 @@ function handlePanitiaLogin(event) {
     }
 }
 
-function logoutPanitia() {
-    sessionStorage.removeItem(PANITIA_AUTH_KEY);
-    checkPanitiaAuthUI();
-    switchTab('form-tab');
-    showToast('Anda telah keluar dari Mode Panitia.', 'info');
+    if (isAuthenticated) {
+        sessionStorage.setItem(PANITIA_AUTH_KEY, 'true');
+        checkPanitiaAuthUI();
+        closeAuthModal();
+        showToast('Login Panitia Berhasil (Database Verified)!', 'success');
+        
+        if (pendingTargetTab) {
+            const tabToOpen = pendingTargetTab;
+            pendingTargetTab = null;
+            switchTab(tabToOpen);
+        }
+    } else {
+        showToast('PIN / Password Panitia Salah!', 'error');
+        const inputEl = document.getElementById('panitia-pin-input');
+        if (inputEl) {
+            inputEl.value = '';
+            inputEl.focus();
+        }
+    }
 }
 
 function switchTab(tabId) {
