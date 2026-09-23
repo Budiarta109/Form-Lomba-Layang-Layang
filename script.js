@@ -608,7 +608,7 @@ function renderAttendanceTab() {
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-900 text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-800">
-                        <th class="p-3">No. Dada</th>
+                        <th class="p-3">No. Layangan</th>
                         <th class="p-3">Nama Layangan</th>
                         <th class="p-3">Kategori & Seri</th>
                         <th class="p-3">Status Kehadiran</th>
