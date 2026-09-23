@@ -1287,7 +1287,11 @@ function exportToCSV() {
 
     if (typeof XLSX !== 'undefined') {
         try {
-            const workbook = XLSX.utils.book_new();
+            const standardCols = [
+                { wch: 5 }, { wch: 15 }, { wch: 10 }, { wch: 22 },
+                { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 30 },
+                { wch: 16 }, { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 18 }
+            ];
 
             const mapRecord = (r, idx) => ({
                 'No': idx + 1,
@@ -1306,82 +1310,64 @@ function exportToCSV() {
                 'Tanggal Daftar': r.createdAt
             });
 
-            const standardCols = [
-                { wch: 5 }, { wch: 15 }, { wch: 10 }, { wch: 22 },
-                { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 30 },
-                { wch: 16 }, { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 18 }
-            ];
+            // Helper to download single workbook file
+            const downloadSingleFile = (list, sheetTitle, fileName) => {
+                if (list.length === 0) return false;
+                const wb = XLSX.utils.book_new();
+                const data = list.map(mapRecord);
+                const ws = XLSX.utils.json_to_sheet(data);
+                ws['!cols'] = standardCols;
+                XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
+                XLSX.writeFile(wb, fileName);
+                return true;
+            };
 
-            // 1. Sheet Utama: Semua Data Pendaftar
-            const allData = registrations.map(mapRecord);
-            const allWs = XLSX.utils.json_to_sheet(allData);
-            allWs['!cols'] = standardCols;
-            XLSX.utils.book_append_sheet(workbook, allWs, "Semua Peserta");
+            let exportedCount = 0;
 
-            // 2. Sheet per Kategori (Beda Sheet)
+            // 1. Ekspor per Kategori (1 Kategori = 1 File Excel)
             const categories = ["Bebean", "Janggan", "Janggan Buntut", "Pecukan", "Kreasi Baru", "Big Size / Rare Angon"];
             categories.forEach(cat => {
                 const list = registrations.filter(r => r.kategori === cat);
                 if (list.length > 0) {
-                    const data = list.map(mapRecord);
-                    const ws = XLSX.utils.json_to_sheet(data);
-                    ws['!cols'] = standardCols;
-                    XLSX.utils.book_append_sheet(workbook, ws, `Kat-${cat.substring(0, 15)}`);
+                    const success = downloadSingleFile(list, "Peserta", `Lomba_Layangan_Kategori_${cat.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+                    if (success) exportedCount++;
                 }
             });
 
-            // 3. Sheet per Seri (Beda Sheet)
-            const seriesList = ["Seri A (Dewasa / Remaja)", "Seri B (Anak-anak)", "Seri C (Eksibisi / Bebas)", "Seri VIP / Khusus"];
-            seriesList.forEach(seri => {
-                const list = registrations.filter(r => r.seriLayangan === seri);
+            // 2. Ekspor per Seri (1 Seri = 1 File Excel)
+            const seriesList = [
+                { name: "Seri A (Dewasa / Remaja)", file: "Seri_A_Dewasa_Remaja" },
+                { name: "Seri B (Anak-anak)", file: "Seri_B_Anak_Anak" },
+                { name: "Seri C (Eksibisi / Bebas)", file: "Seri_C_Eksibisi_Bebas" },
+                { name: "Seri VIP / Khusus", file: "Seri_VIP_Khusus" }
+            ];
+            seriesList.forEach(seriObj => {
+                const list = registrations.filter(r => r.seriLayangan === seriObj.name);
                 if (list.length > 0) {
-                    const data = list.map(mapRecord);
-                    const ws = XLSX.utils.json_to_sheet(data);
-                    ws['!cols'] = standardCols;
-                    const sheetName = seri.includes('Dewasa') ? 'Seri-A' : seri.includes('Anak') ? 'Seri-B' : seri.includes('Eksibisi') ? 'Seri-C' : 'Seri-VIP';
-                    XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+                    const success = downloadSingleFile(list, "Peserta", `Lomba_Layangan_${seriObj.file}.xlsx`);
+                    if (success) exportedCount++;
                 }
             });
 
-            // 4. Sheet per Metode Pendaftaran (Online vs Offline - Beda Sheet)
+            // 3. Ekspor Pendaftaran Online (1 File Excel)
             const onlineList = registrations.filter(r => !r.id.includes('OFF'));
             if (onlineList.length > 0) {
-                const data = onlineList.map(mapRecord);
-                const ws = XLSX.utils.json_to_sheet(data);
-                ws['!cols'] = standardCols;
-                XLSX.utils.book_append_sheet(workbook, ws, "Online");
+                const success = downloadSingleFile(onlineList, "Online", `Lomba_Layangan_Pendaftar_Online.xlsx`);
+                if (success) exportedCount++;
             }
 
+            // 4. Ekspor Pendaftaran Offline (1 File Excel)
             const offlineList = registrations.filter(r => r.id.includes('OFF'));
             if (offlineList.length > 0) {
-                const data = offlineList.map(mapRecord);
-                const ws = XLSX.utils.json_to_sheet(data);
-                ws['!cols'] = standardCols;
-                XLSX.utils.book_append_sheet(workbook, ws, "Offline");
+                const success = downloadSingleFile(offlineList, "Offline", `Lomba_Layangan_Pendaftar_Offline.xlsx`);
+                if (success) exportedCount++;
             }
 
-            // 5. Sheet Rekap Pendapatan
-            const summaryData = categories.map(cat => {
-                const count = registrations.filter(r => r.kategori === cat).length;
-                const totalFeeNum = registrations.filter(r => r.kategori === cat).reduce((sum, r) => {
-                    const numeric = parseInt((r.biaya || "50000").replace(/[^0-9]/g, '')) || 50000;
-                    return sum + numeric;
-                }, 0);
-                return {
-                    'Kategori Layangan': cat,
-                    'Total Terdaftar': count,
-                    'Tarif per Peserta': formatRupiah(getCategoryPrice(cat)),
-                    'Total Pendapatan': formatRupiah(totalFeeNum)
-                };
-            });
-
-            const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
-            summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
-            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Rekap Pendapatan");
-
-            const filename = `Data_Lomba_Layangan_SEMAYA_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(workbook, filename);
-            showToast('File Excel dengan Sheet terpisah untuk Kategori, Seri, & Metode berhasil diunduh!', 'success');
+            if (exportedCount > 0) {
+                showToast(`Berhasil mengunduh ${exportedCount} file Excel terpisah (Kategori, Seri, Online, & Offline)!`, 'success');
+            } else {
+                showToast('Tidak ada data yang dapat diekspor.', 'error');
+            }
             return;
         } catch (e) {
             console.error("SheetJS export error:", e);
